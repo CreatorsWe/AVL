@@ -1,3 +1,0 @@
-C:/Users/86185/Desktop/AVL/CMakeFiles/test.dir
-C:/Users/86185/Desktop/AVL/CMakeFiles/edit_cache.dir
-C:/Users/86185/Desktop/AVL/CMakeFiles/rebuild_cache.dir
