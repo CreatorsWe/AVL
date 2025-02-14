@@ -1,3 +1,5 @@
+#ifndef _NODE
+#define _NODE
 #include<memory>
 #include<utility>
 using namespace std;
@@ -16,6 +18,7 @@ public:
   Node(const Node& _node);  //浅拷贝
   Node(Node&& _node);
   bool isBalance() const;
+  void resetkey(const pair<int,T>& _pair);
 };
 
 template<typename T>
@@ -23,7 +26,7 @@ Node<T>::Node(const int& _key,const T& _data):key(_key),data(_data),\
               balancefactor(0),lptr(nullptr),rptr(nullptr){};
 
 template<typename T>
-Node<T>::Node(const pair<int,T>& _pair):balancefactor(0),(nullptr),\
+Node<T>::Node(const pair<int,T>& _pair):balancefactor(0),lptr(nullptr),\
               rptr(nullptr) {
   key = _pair.first;
   data = _pair.second;
@@ -52,3 +55,11 @@ bool Node<T>::isBalance() const
   if(balancefactor < 2 && balancefactor > -2) return true;
   else return false;
 }
+
+template <typename T>
+void Node<T>::resetkey(const pair<int, T> &_pair)
+{
+  key = _pair.first;
+  data = _pair.second;
+}
+#endif
