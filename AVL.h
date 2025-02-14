@@ -31,7 +31,11 @@ private:  //一些辅助函数
   /*处理结点失衡*/
   void Balance(const ShareNode& _node,const UnbalanceType& _type,bool& _isupdate);
   /*由于处理检查并处理失衡语句相同，所以封装为一个函数*/
-  void Handle(const ShareNode& _node,bool& _isupdate);
+  void leftRotate(const ShareNode& _node);
+  void rightRotate(const ShareNode& _node);
+  /* Handle函数是封装函数，用于处理失衡，flag区分是处理插入失衡
+  还是删除失衡，它们向上更新的策略不同 */
+  void Handle(const ShareNode& _node,const int& _flag,bool& _isupdate);
   /*删除非叶子节点时该函数删除并返回左子树最大关键字，并保证该函数查找的路径平衡*/
   T leftMax(const ShareNode& _node,bool& _isupdate);
 public:
@@ -82,7 +86,7 @@ inline bool AVL<T>::Search(const typename AVL<T>::ShareNode &_node, const int &_
 template <typename T>
 inline void AVL<T>::preOrder(const typename AVL<T>::ShareNode &_node) const
 {
-  if(_node == nullptr) return;
+  if(_node == nullptr) return;   
   std::cout<<"("<<_node->key<<","<<_node->data<<","<<_node->balancefactor<<")"<<std::endl;
   preOrder(_node->lptr);
   preOrder(_node->rptr);
@@ -189,7 +193,29 @@ inline void AVL<T>::Balance(const typename AVL<T>::ShareNode &_node, \
   //平衡或结点不存在或错误，返回
   if(_node->isBalance() || _node == nullptr || _type == UnbalanceType::NOT) return; 
   if(_type == UnbalanceType::LL){ //LL失衡，右旋，将_node的左子树转上来
-    //1.备份node防止智能指针改变造成内存释放
+    rightRotate(_node);
+
+    return;
+  }
+  else if(_type == UnbalanceType::RR){ //RR失衡，左旋
+    leftRotate(_node);
+    return;
+  }
+  /* 先对_node的左孩子左旋变成LL型，再对_node右旋 */
+  else if(_type == UnbalanceType::LR){ 
+    leftRotate(_node->lptr);
+    rightRotate(_node);
+    return;
+  }
+  else if(_type == UnbalanceType::RL){
+
+  }
+}
+
+template <typename T>
+inline void AVL<T>::leftRotate(const typename AVL<T>::ShareNode &_node)
+{
+//1.备份node防止智能指针改变造成内存释放
     auto tmp = _node;
     //2.更新 指向 _node 的指针指向 _node 的左孩子
     _node = tmp->lptr;
@@ -201,22 +227,35 @@ inline void AVL<T>::Balance(const typename AVL<T>::ShareNode &_node, \
     //5.更新这两个调整点的平衡因子
     tmp->balancefactor = getBalanceFactor(tmp);
     _node->balancefactor = getBalanceFactor(_node);
-    //6.失衡平衡后，失衡点的平衡因子必定更新为 0 ，不会影响上层平衡因子
-    _isupdate = false;
-    return;
-  }
-  else if(_type == UnbalanceType::RR){ //RR失衡，左旋
-
-  }
 }
 
 template <typename T>
-inline void AVL<T>::Handle(const ShareNode &_node, bool &_isupdate)
+inline void AVL<T>::rightRotate(const ShareNode &_node)
+{
+  //1.备份node防止智能指针改变造成内存释放
+    auto tmp = _node;
+    //2.更新 指向 _node 的指针指向 _node 的右孩子
+    _node = tmp->rptr;
+    /*3.将原来 _node 的右指针指向 _node 右孩子的左指针
+    (现在tmp指向原来_node，_node指向原来_node的右孩子)*/
+    tmp->rptr = _node->lptr;
+    //4.将原来 _node 的右孩子的左指针指向 原来的_node
+    _node->rptr = tmp;
+    //5.更新这两个调整点的平衡因子
+    tmp->balancefactor = getBalanceFactor(tmp);
+    _node->balancefactor = getBalanceFactor(_node);
+    //6.失衡平衡后，失衡点的平衡因子必定更新为 0 ，不会影响上层平衡因子
+    _isupdate = false;
+}
+
+template <typename T>
+inline void AVL<T>::Handle(const ShareNode &_node, const int& _flag,\
+                    bool &_isupdate)
 {
   /*判断当前结点因子是否失衡，不是则返回，是则判断失衡类型并调整*/
   int tmp = getBalanceFactor(_node);
-  /*如果更新后平衡因子为 0 ，不会对上层平衡因子产生影响，不需要向上处理*/
-  if(_node->balancefactor != 0 && tmp == 0) _isupdate = false;
+  /*插入：如果更新后平衡因子为 0 ，不会对上层平衡因子产生影响，不用向上更新*/
+  if(_flag == 1 && _node->balancefactor != 0 && tmp == 0) _isupdate = false;
   _node->balancefactor = tmp;
   if(_node->isBalance()) return;
   UnbalanceType type = jugleUnbalanceType(_node);
